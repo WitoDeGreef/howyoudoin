@@ -6,6 +6,7 @@ export default function Category() {
     const router = useRouter();
     const [questions, setQuestions] = useState([]);
     const [active, setActive] = useState();
+    const [reset, setReset] = useState(false);
 
     useEffect(() => {
         const category = router.query.category;
@@ -49,20 +50,60 @@ export default function Category() {
     }, [questions]);
 
     const nextQuestion = () => {
-        const index = questions.indexOf(active);
-        if (index >= questions.length - 1) {
-            setActive("Je hebt alle vragen beantwoord!");
-            return;
-        }
-
         // Add the active question to the history in local storage
         const history = JSON.parse(localStorage.getItem("history")) || [];
         history.push(active);
         localStorage.setItem("history", JSON.stringify(history));
 
+        // If there are no more questions, display a message
+        const index = questions.indexOf(active);
+        if (index >= questions.length - 1) {
+            setActive("Je hebt alle vragen beantwoord van deze categorie!");
+            setReset(true);
+            return;
+        }
+
         // Set the next question as active
         setActive(questions[index + 1]);
     };
+
+    const resetQuestions = () => {
+        // Get the questions for this category
+        const category = router.query.category;
+        let original = [];
+        switch (category) {
+            case "juicy":
+                original = juicy;
+                break;
+            case "random":
+                original = random;
+                break;
+            case "bestfriend":
+                original = bestfriend;
+                break;
+            case "newfriend":
+                original = newfriend;
+                break;
+            case "deep":
+                original = deep;
+                break;
+            case "fun":
+                original = fun;
+                break;
+            default:
+                setQuestions([]);
+                return;
+        }
+
+        // Remove the original questions from the history to reset them
+        const history = JSON.parse(localStorage.getItem("history")) || [];
+        const filtered = history.filter(question => !original.includes(question));
+        localStorage.setItem("history", JSON.stringify(filtered));
+
+        // Reset the questions
+        setQuestions(original);
+        setReset(false);
+    }
 
     return (
         <section className="section-ourmenu bg2-pattern" style={{
@@ -78,9 +119,16 @@ export default function Category() {
                     {active}
                     </span>
                 </div>
-                <button className="btn3 flex-c-m size18 txt11 trans-0-4 m-10" onClick={nextQuestion}>
-                    Volgende
-                </button>
+                {!reset && (
+                    <button className="btn3 flex-c-m size18 txt11 trans-0-4 m-10" onClick={nextQuestion}>
+                        Volgende
+                    </button>
+                )}
+                {!!reset && (
+                    <button className="btn3 flex-c-m size18 txt11 trans-0-4 m-10" onClick={resetQuestions}>
+                        Reset categorie
+                    </button>
+                )}
             </div>
         </section>
     );
